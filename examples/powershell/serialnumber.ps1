@@ -1,4 +1,9 @@
-﻿Import-Module .\base64url.psm1
+﻿param(
+    [string]$SubscriptionKey = "",
+    [string]$IdentificationLink = ""
+)
+
+Import-Module .\base64url.psm1
 
 ### Semantic IDs (IEC CDD / IDTA Digital Nameplate)
 $serialNumberSemanticId = '0173-1#02-AAM556#002' # SerialNumber property
@@ -25,13 +30,11 @@ this function asks the user for the identification link (IEC 61406) of the asset
 on the product as a QR code, e.g. https://i4d.de/a99fd6ef0b73b11d0a6cfde7c1ee76e8
 #>
 
-$identificationLink = ""
-do{
-    $identificationLink = Read-Host "Please enter the identification link, e.g. https://i4d.de/a99fd6ef0b73b11d0a6cfde7c1ee76e8"
-    if ($identificationLink -eq ""){
-        Write-Host "identification link cannot be null. Please enter a valid link"
-        }
-    }while($identificationLink -eq "")
+$defaultLink = "https://i4d.de/a99fd6ef0b73b11d0a6cfde7c1ee76e8"
+$identificationLink = Read-Host "Please enter the identification link (default: $defaultLink)"
+if ($identificationLink -eq ""){
+    $identificationLink = $defaultLink
+}
 return $identificationLink
 }
 
@@ -81,8 +84,8 @@ foreach ($element in $elements){
 return $null
 }
 
-$subscription = getSubscriptionKey
-$identificationLink = getIdentificationLink
+if ($SubscriptionKey -eq "") { $subscription = getSubscriptionKey } else { $subscription = $SubscriptionKey }
+if ($IdentificationLink -eq "") { $identificationLink = getIdentificationLink } else { $identificationLink = $IdentificationLink }
 
 $headers = @{
 'Ocp-Apim-Subscription-Key' = $subscription
