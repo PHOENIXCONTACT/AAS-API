@@ -7,6 +7,12 @@ param(
 Import-Module .\base64url.psm1
 . .\config.ps1
 
+# Authenticate against the corporate web proxy with the current Windows account (Kerberos/NTLM).
+# Windows PowerShell 5.1 does not do this on its own, so the proxy would block the downloads.
+if ($null -ne [System.Net.WebRequest]::DefaultWebProxy) {
+    [System.Net.WebRequest]::DefaultWebProxy.Credentials = [System.Net.CredentialCache]::DefaultNetworkCredentials
+}
+
 if ($SubscriptionKey -ne "")    { $subscription       = $SubscriptionKey }
 elseif ($DefaultSubscriptionKey -ne "") { $subscription = $DefaultSubscriptionKey }
 else                            { $subscription       = getSubscriptionKey }
@@ -69,6 +75,7 @@ Write-Host "Saving $(@($files).Count) document(s) to: $outputDir"
 $files | ForEach-Object {
     $filename = Split-Path $_.value -Leaf
     $outPath  = Join-Path $outputDir $filename
-    Invoke-WebRequest -Uri $_.value -OutFile $outPath -Headers $headers -UseDefaultCredentials
+    # No $headers here: the subscription key is only for api.phoenixcontact.com, not for the file host
+    Invoke-WebRequest -Uri $_.value -OutFile $outPath
     Write-Host "  Saved: $outPath"
 }
